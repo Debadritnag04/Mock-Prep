@@ -21,6 +21,89 @@ interface AnalyticsDashboardProps {
   onBackToHome: () => void;
 }
 
+const PercentileEstimatorTool = ({ defaultScore }: { defaultScore: number }) => {
+  const [examType, setExamType] = useState('CAT');
+  const [score, setScore] = useState<string>(defaultScore.toString());
+  const [estimatedPercentile, setEstimatedPercentile] = useState<number | null>(null);
+
+  const calculatePercentile = () => {
+    const numScore = parseFloat(score);
+    if (isNaN(numScore)) return;
+    
+    // Very basic historical heuristic for estimation
+    let est = 0;
+    if (examType === 'CAT') {
+      if (numScore >= 100) est = 99.9;
+      else if (numScore >= 80) est = 99.0;
+      else if (numScore >= 65) est = 95.0;
+      else if (numScore >= 50) est = 90.0;
+      else if (numScore >= 35) est = 80.0;
+      else if (numScore >= 20) est = 60.0;
+      else est = Math.max(0, numScore * 1.5);
+    } else {
+      if (numScore >= 45) est = 99.0;
+      else if (numScore >= 35) est = 95.0;
+      else if (numScore >= 28) est = 90.0;
+      else if (numScore >= 20) est = 80.0;
+      else est = Math.max(0, numScore * 2.5);
+    }
+    
+    // Add some variance based on exact score
+    const variance = (numScore % 10) / 10;
+    est = Math.min(99.99, est + variance);
+    setEstimatedPercentile(est);
+  };
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col h-full">
+      <h3 className="text-slate-500 font-bold text-xs uppercase tracking-wider mb-4 flex items-center gap-2">
+        <Calculator className="w-4 h-4 text-indigo-500" />
+        Percentile Estimator Tool
+      </h3>
+      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col flex-1">
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div>
+            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Exam</label>
+            <select
+              value={examType}
+              onChange={(e) => setExamType(e.target.value)}
+              className="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="CAT">CAT</option>
+              <option value="XAT">XAT</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Overall Score</label>
+            <input
+              type="number"
+              value={score}
+              onChange={(e) => setScore(e.target.value)}
+              className="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-mono font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+        </div>
+        
+        <button
+          onClick={calculatePercentile}
+          className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-colors shadow-xs mb-4"
+        >
+          Calculate
+        </button>
+
+        {estimatedPercentile !== null && (
+          <div className="mt-auto p-3 bg-indigo-50 border border-indigo-100 rounded-xl text-center animate-in fade-in zoom-in-95 duration-200">
+            <div className="text-[10px] text-indigo-600 font-bold uppercase tracking-wider mb-1">Estimated Overall</div>
+            <div className="text-2xl font-black text-indigo-700 font-mono">
+              {estimatedPercentile.toFixed(2)} <span className="text-sm font-bold">%ile</span>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
   attempt,
   mock,
@@ -192,24 +275,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
             </div>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col justify-center">
-            <h3 className="text-slate-500 font-bold text-xs uppercase tracking-wider mb-4 flex items-center gap-2">
-              <Calculator className="w-4 h-4 text-indigo-500" />
-              Percentile Estimator Tool
-            </h3>
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-              <p className="text-xs text-slate-500 mb-4 leading-relaxed">
-                A mock score cannot know the actual percentile unless you have an appropriate benchmark distribution. We estimate ~{attempt.percentileEstimate.toFixed(1)}%ile based on historical scaling.
-              </p>
-              <div className="flex gap-2">
-                <input type="text" placeholder="Upload custom benchmark data..." disabled className="flex-1 bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs opacity-60 cursor-not-allowed" />
-                <button disabled className="px-4 py-2 bg-indigo-100 text-indigo-400 rounded-lg text-xs font-bold cursor-not-allowed">Calculate</button>
-              </div>
-              <div className="mt-2 text-[10px] text-indigo-500 font-medium">
-                * Actual percentile may differ. Pro users can upload custom score-vs-percentile reference tables.
-              </div>
-            </div>
-          </div>
+          <PercentileEstimatorTool defaultScore={attempt.totalScore} />
         </div>
 
         {/* Section-wise results */}

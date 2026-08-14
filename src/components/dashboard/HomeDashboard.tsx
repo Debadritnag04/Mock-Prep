@@ -20,6 +20,7 @@ import {
   BarChart2,
   RotateCcw
 } from 'lucide-react';
+import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface HomeDashboardProps {
   onStartExam: (mock: MockTest) => void;
@@ -180,6 +181,40 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Mock Trajectory Chart */}
+      {attempts.length > 1 && (
+        <div className="max-w-7xl mx-auto bg-white border border-slate-200 p-5 rounded-2xl shadow-xs">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-indigo-600" />
+              Mock Trajectory (Last 5 Attempts)
+            </h2>
+          </div>
+          <div className="h-56 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={attempts.slice(-5).map((a, i) => ({
+                  name: `Mock ${attempts.length - Math.min(attempts.length, 5) + i + 1}`,
+                  score: a.totalScore,
+                  percentile: Math.round(a.percentileEstimate * 10) / 10,
+                }))}
+                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dy={10} />
+                <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dx={-10} />
+                <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dx={10} domain={[0, 100]} />
+                <Tooltip
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
+                />
+                <Line yAxisId="left" type="monotone" dataKey="score" stroke="#4f46e5" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} name="Total Score" />
+                <Line yAxisId="right" type="monotone" dataKey="percentile" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} name="Est. Percentile" />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
 
       {/* In-Progress Interrupted Mock Resume Banner */}
       {activeAttempt && (
