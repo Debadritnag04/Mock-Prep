@@ -1,0 +1,6 @@
+{
+  "name": "CAT & XAT Exam Simulator and AI Prep Platform",
+  "description": "Full-stack CAT/XAT mock testing platform featuring PDF question parser, deterministic CBT exam engine with live timer & TCS-iON palette, authentic onscreen calculator, score analytics, mistake notebook, and AI study coach.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
